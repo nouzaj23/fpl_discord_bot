@@ -1,10 +1,10 @@
 package handler
 
 import (
+	"fpl_discord_bot/database"
 	"fpl_discord_bot/message/cmd"
 	"fpl_discord_bot/message/commands"
 	"github.com/bwmarrin/discordgo"
-	"gorm.io/gorm"
 	"log"
 	"strings"
 	"time"
@@ -17,7 +17,7 @@ var allowedCommands = map[string][]string{
 	"1178335542962827275": {cmd.Player},
 }
 
-func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB) {
+func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
@@ -29,6 +29,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB
 
 	command := args[1]
 	channelID := m.ChannelID
+	db := database.DB
 
 	if isCommandAllowedInChannel(command, channelID) {
 		switch command {
