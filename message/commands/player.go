@@ -54,21 +54,21 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 }
 
 func buildResponse(player models.Player, team models.Team) string {
-	response := fmt.Sprintf("**Player Stats for %s (%s)**\n", player.Name, player.WebName)
-	response += fmt.Sprintf("- **Position:** %s\n", player.Position)
+	response := fmt.Sprintf("# Player Info for %s\n", player.Name)
+	response += fmt.Sprintf("**Position:** %s\n", player.Position)
+	response += fmt.Sprintf("**Team:** %s\n", team.Name)
 	if player.Nationality != "" {
-		response += fmt.Sprintf("- **Nationality:** %s\n", player.Nationality)
+		response += fmt.Sprintf("**Nationality:** %s\n", player.Nationality)
 	}
-	response += fmt.Sprintf("- **Team:** %s\n", team.Name)
-	response += fmt.Sprintf("- **Selected By Percent:** %s\n", player.SelectedByPercent)
+	response += "**Selected By:** " + player.SelectedByPercent + "%\n"
 	response += "\n**Main FPL Stats:**\n"
-	response += fmt.Sprintf("- **Price:** %d\n", player.Price)
+	response += fmt.Sprintf("- **Price:** £%.1f\n", float32(player.Price)/10)
 	response += fmt.Sprintf("- **Total Points:** %d\n", player.TotalPoints)
 	response += fmt.Sprintf("- **Points Per Game:** %s\n", player.PointsPerGame)
-	response += fmt.Sprintf("- **Games Played:** %d\n", player.Starts)
-	response += fmt.Sprintf("- **Minutes Played:** %d\n", player.Minutes)
 	response += fmt.Sprintf("- **Goals:** %d\n", player.Goals)
 	response += fmt.Sprintf("- **Assists:** %d\n", player.Assists)
+	response += fmt.Sprintf("- **Games Played:** %d\n", player.Starts)
+	response += fmt.Sprintf("- **Minutes Played:** %d\n", player.Minutes)
 
 	if player.Position != "Forward" && player.Position != "Midfielder" {
 		response += fmt.Sprintf("- **Clean Sheets:** %d\n", player.CleanSheets)
