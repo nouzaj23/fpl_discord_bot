@@ -15,6 +15,7 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 		util.InformAndDelete(s, m.Message, "Missing player name. Usage:\n!fpl player <player_name>")
 		return
 	}
+
 	var name string
 	if len(args) > 1 {
 		name = strings.Join(args, " ")
@@ -23,10 +24,12 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 	}
 	var players []models.Player
 	db.Where("name LIKE ?", name).Find(&players)
+
 	if len(players) == 0 {
 		util.InformAndDelete(s, m.Message, fmt.Sprintf("No player with name '%s' found, please try again", name))
 		return
 	}
+
 	if len(players) > 1 {
 		response := fmt.Sprintf("**Multiple players found matching the name %s**.\n", name)
 		for _, player := range players {
@@ -38,10 +41,19 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 		util.InformAndDelete(s, m.Message, response)
 		return
 	}
+
 	player := players[0]
 	var team models.Team
 	db.First(&team, player.TeamID)
+	response := buildResponse(player, team)
 
+	_, err := s.ChannelMessageSendReply(m.ChannelID, response, m.MessageReference)
+	if err != nil {
+		log.Fatalf("Failed to send message: %v", err)
+	}
+}
+
+func buildResponse(player models.Player, team models.Team) string {
 	response := fmt.Sprintf("**Player Stats for %s (%s)**\n", player.Name, player.WebName)
 	response += fmt.Sprintf("- **Position:** %s\n", player.Position)
 	if player.Nationality != "" {
@@ -89,9 +101,5 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 	response += fmt.Sprintf("- **Cost Change:** %.1f\n", float32(player.CostChange)/10)
 	response += fmt.Sprintf("- **Bonus:** %d\n", player.Bonus)
 	response += fmt.Sprintf("- **BPS (Bonus Points System):** %d\n", player.Bps)
-
-	_, err := s.ChannelMessageSendReply(m.ChannelID, response, m.MessageReference)
-	if err != nil {
-		log.Fatalf("Failed to send message: %v", err)
-	}
+	return response
 }
