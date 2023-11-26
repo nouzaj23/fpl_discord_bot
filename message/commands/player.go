@@ -2,8 +2,8 @@ package commands
 
 import (
 	"fmt"
-	"fpl_discord_bot/message/handler"
 	"fpl_discord_bot/models"
+	"fpl_discord_bot/util"
 	"github.com/bwmarrin/discordgo"
 	"gorm.io/gorm"
 	"log"
@@ -13,7 +13,7 @@ import (
 
 func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB, args []string) {
 	if len(args) == 0 {
-		handler.InformAndDelete(s, m.Message, "Missing player name. Usage:\n!fpl player <player_name>")
+		util.InformAndDelete(s, m.Message, "Missing player name. Usage:\n!fpl player <player_name>")
 		return
 	}
 	var name string
@@ -25,7 +25,7 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 	var players []models.Player
 	db.Where("name LIKE ?", name).Find(&players)
 	if len(players) == 0 {
-		handler.InformAndDelete(s, m.Message, fmt.Sprintf("No player with name '%s' found, please try again", name))
+		util.InformAndDelete(s, m.Message, fmt.Sprintf("No player with name '%s' found, please try again", name))
 		return
 	}
 	if len(players) > 1 {
@@ -36,7 +36,7 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 			response += fmt.Sprintf("- %s (%s) - %s\n", player.Name, team.ShortName, player.Position)
 		}
 		response += "Please try again with a more precise name"
-		handler.InformAndDelete(s, m.Message, response)
+		util.InformAndDelete(s, m.Message, response)
 		return
 	}
 	player := players[0]

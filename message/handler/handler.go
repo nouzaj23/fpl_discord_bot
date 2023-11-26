@@ -4,10 +4,9 @@ import (
 	"fpl_discord_bot/database"
 	"fpl_discord_bot/message/cmd"
 	"fpl_discord_bot/message/commands"
+	"fpl_discord_bot/util"
 	"github.com/bwmarrin/discordgo"
-	"log"
 	"strings"
-	"time"
 )
 
 const prefix string = "!fpl"
@@ -38,10 +37,10 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case cmd.Player:
 			commands.HandlePlayer(s, m, db, args[2:])
 		default:
-			InformAndDelete(s, m.Message, "Unknown command")
+			util.InformAndDelete(s, m.Message, "Unknown command")
 		}
 	} else {
-		InformAndDelete(s, m.Message, "This command is not allowed in this channel")
+		util.InformAndDelete(s, m.Message, "This command is not allowed in this channel")
 	}
 }
 
@@ -57,20 +56,4 @@ func isCommandAllowedInChannel(command, channelID string) bool {
 		}
 	}
 	return false
-}
-
-func InformAndDelete(s *discordgo.Session, m *discordgo.Message, content string) {
-	res, err := s.ChannelMessageSend(m.ChannelID, content)
-	if err != nil {
-		log.Fatalf("Failed to send message: %v", err)
-	}
-	time.Sleep(5 * time.Second)
-	err = s.ChannelMessageDelete(m.ChannelID, m.ID)
-	if err != nil {
-		log.Fatalf("Failed to send message: %v", err)
-	}
-	err = s.ChannelMessageDelete(res.ChannelID, res.ID)
-	if err != nil {
-		log.Fatalf("Failed to send message: %v", err)
-	}
 }
