@@ -33,14 +33,10 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case cmd.Hello:
 			commands.HandleHello(s, m)
 		default:
-			mes, err := s.ChannelMessageSend(channelID, "Unknown command.")
-			if err != nil {
-				log.Fatalf("Failed to send message: %v", err)
-			}
-			InformAndDelete(s, mes)
+			InformAndDelete(s, m.Message, "Unknown command")
 		}
 	} else {
-		InformAndDeleteMC(s, m)
+		InformAndDelete(s, m.Message, "This command is not allowed in this channel")
 	}
 }
 
@@ -58,12 +54,8 @@ func isCommandAllowedInChannel(command, channelID string) bool {
 	return false
 }
 
-func InformAndDeleteMC(s *discordgo.Session, m *discordgo.MessageCreate) {
-	InformAndDelete(s, m.Message)
-}
-
-func InformAndDelete(s *discordgo.Session, m *discordgo.Message) {
-	res, err := s.ChannelMessageSend(m.ChannelID, "This command is not allowed in this channel.")
+func InformAndDelete(s *discordgo.Session, m *discordgo.Message, content string) {
+	res, err := s.ChannelMessageSend(m.ChannelID, content)
 	if err != nil {
 		log.Fatalf("Failed to send message: %v", err)
 	}
