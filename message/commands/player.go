@@ -7,7 +7,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"gorm.io/gorm"
 	"log"
-	"math"
 	"strings"
 )
 
@@ -61,9 +60,9 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 
 	if player.Position != "Forward" && player.Position != "Midfielder" {
 		response += fmt.Sprintf("- **Clean Sheets:** %d\n", player.CleanSheets)
-		response += fmt.Sprintf("- **Clean Sheets Per 90:** %.2f\n", roundFloat(float64(player.CleanSheetsPer90), 2))
+		response += fmt.Sprintf("- **Clean Sheets Per 90:** %.2f\n", util.RoundFloat(float64(player.CleanSheetsPer90), 2))
 		response += fmt.Sprintf("- **Goals Conceded:** %d\n", player.GoalsConceded)
-		response += fmt.Sprintf("- **Goals Conceded Per 90:** %.2f\n", roundFloat(float64(player.GoalsConcededPer90), 2))
+		response += fmt.Sprintf("- **Goals Conceded Per 90:** %.2f\n", util.RoundFloat(float64(player.GoalsConcededPer90), 2))
 	}
 
 	if player.Position == "Goalkeeper" {
@@ -73,16 +72,16 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 	response += fmt.Sprintf("- **Yellow Cards:** %d\n", player.YellowCards)
 	response += fmt.Sprintf("- **Red Cards:** %d\n", player.RedCards)
 	response += "\n**Advanced Stats:**\n"
-	response += fmt.Sprintf("- **xG (Expected Goals):** %.2f\n", roundFloat(float64(player.XG), 2))
-	response += fmt.Sprintf("- **xG (Expected Goals) Per 90:** %.2f\n", roundFloat(float64(player.XGper90), 2))
-	response += fmt.Sprintf("- **xA (Expected Assists):** %.2f\n", roundFloat(float64(player.XA), 2))
-	response += fmt.Sprintf("- **xA (Expected Assists) Per 90:** %.2f\n", roundFloat(float64(player.XAper90), 2))
-	response += fmt.Sprintf("- **xGI (Expected Goal Involvement):** %.2f\n", roundFloat(float64(player.XGI), 2))
-	response += fmt.Sprintf("- **xGI (Expected Goal Involvement) Per 90:** %.2f\n", roundFloat(float64(player.XGIper90), 2))
+	response += fmt.Sprintf("- **xG (Expected Goals):** %.2f\n", util.RoundFloat(float64(player.XG), 2))
+	response += fmt.Sprintf("- **xG (Expected Goals) Per 90:** %.2f\n", util.RoundFloat(float64(player.XGper90), 2))
+	response += fmt.Sprintf("- **xA (Expected Assists):** %.2f\n", util.RoundFloat(float64(player.XA), 2))
+	response += fmt.Sprintf("- **xA (Expected Assists) Per 90:** %.2f\n", util.RoundFloat(float64(player.XAper90), 2))
+	response += fmt.Sprintf("- **xGI (Expected Goal Involvement):** %.2f\n", util.RoundFloat(float64(player.XGI), 2))
+	response += fmt.Sprintf("- **xGI (Expected Goal Involvement) Per 90:** %.2f\n", util.RoundFloat(float64(player.XGIper90), 2))
 
 	if player.Position == "Goalkeeper" || player.Position == "Defender" {
-		response += fmt.Sprintf("- **xGC (Expected Goals Conceded):** %.2f\n", roundFloat(float64(player.XGC), 2))
-		response += fmt.Sprintf("- **XGC (Expected Goals Conceded) Per 90:** %.2f\n", roundFloat(float64(player.XGCper90), 2))
+		response += fmt.Sprintf("- **xGC (Expected Goals Conceded):** %.2f\n", util.RoundFloat(float64(player.XGC), 2))
+		response += fmt.Sprintf("- **XGC (Expected Goals Conceded) Per 90:** %.2f\n", util.RoundFloat(float64(player.XGCper90), 2))
 	}
 
 	response += "\n**Miscellaneous Information:**\n"
@@ -95,10 +94,4 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 	if err != nil {
 		log.Fatalf("Failed to send message: %v", err)
 	}
-}
-
-// Source: https://gosamples.dev/round-float/
-func roundFloat(val float64, precision uint) float64 {
-	ratio := math.Pow(10, float64(precision))
-	return math.Round(val*ratio) / ratio
 }
