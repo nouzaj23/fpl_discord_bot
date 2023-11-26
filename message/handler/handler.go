@@ -31,7 +31,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if isCommandAllowedInChannel(command, channelID) {
 		switch command {
 		case cmd.Hello:
-			commands.HelloCommand(s, m)
+			commands.HandleHello(s, m)
 		default:
 			mes, err := s.ChannelMessageSend(channelID, "Unknown command.")
 			if err != nil {
