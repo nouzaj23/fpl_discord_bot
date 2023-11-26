@@ -4,6 +4,7 @@ import (
 	"fpl_discord_bot/message/cmd"
 	"fpl_discord_bot/message/commands"
 	"github.com/bwmarrin/discordgo"
+	"gorm.io/gorm"
 	"log"
 	"strings"
 	"time"
@@ -13,9 +14,10 @@ const prefix string = "!fpl"
 
 var allowedCommands = map[string][]string{
 	"1174296046155866112": {cmd.Hello},
+	"1178335542962827275": {cmd.Player},
 }
 
-func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB) {
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
@@ -32,6 +34,8 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		switch command {
 		case cmd.Hello:
 			commands.HandleHello(s, m)
+		case cmd.Player:
+			commands.HandlePlayer(s, m, db, args[2:])
 		default:
 			InformAndDelete(s, m.Message, "Unknown command")
 		}
