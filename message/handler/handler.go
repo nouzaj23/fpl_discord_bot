@@ -28,7 +28,7 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	command := args[1]
 	channelID := m.ChannelID
-	db := database.DB
+	db := database.GetDB()
 
 	if isCommandAllowedInChannel(command, channelID) {
 		switch command {
