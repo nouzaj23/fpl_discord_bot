@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-var DB *gorm.DB
+var database *gorm.DB
 
 func InitDB() *gorm.DB {
 	godotenv.Load()
@@ -16,6 +16,10 @@ func InitDB() *gorm.DB {
 	if err != nil {
 		log.Fatalf("%v %v Failed to open database: %v", log.Ldate, log.Ltime, err)
 	}
-	DB = db
+	database = db
 	return db
+}
+
+func GetDB() *gorm.DB {
+	return database
 }
