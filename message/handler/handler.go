@@ -37,10 +37,10 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if err != nil {
 				log.Fatalf("Failed to send message: %v", err)
 			}
-			informAndDelete(s, mes)
+			InformAndDelete(s, mes)
 		}
 	} else {
-		informAndDeleteMC(s, m)
+		InformAndDeleteMC(s, m)
 	}
 }
 
@@ -58,11 +58,11 @@ func isCommandAllowedInChannel(command, channelID string) bool {
 	return false
 }
 
-func informAndDeleteMC(s *discordgo.Session, m *discordgo.MessageCreate) {
-	informAndDelete(s, m.Message)
+func InformAndDeleteMC(s *discordgo.Session, m *discordgo.MessageCreate) {
+	InformAndDelete(s, m.Message)
 }
 
-func informAndDelete(s *discordgo.Session, m *discordgo.Message) {
+func InformAndDelete(s *discordgo.Session, m *discordgo.Message) {
 	res, err := s.ChannelMessageSend(m.ChannelID, "This command is not allowed in this channel.")
 	if err != nil {
 		log.Fatalf("Failed to send message: %v", err)
