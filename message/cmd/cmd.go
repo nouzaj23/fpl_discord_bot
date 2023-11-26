@@ -1,3 +1,3 @@
 package cmd
 
-const Hello string = "Hello"
+const Hello string = "hello"
