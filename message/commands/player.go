@@ -23,7 +23,7 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 		name = args[0]
 	}
 	var players []models.Player
-	db.Where("name LIKE ?", name).Find(&players)
+	db.Where("Name LIKE ?", "%"+name+"%").Find(&players)
 
 	if len(players) == 0 {
 		util.InformAndDelete(s, m.Message, fmt.Sprintf("No player with name '%s' found, please try again", name))
@@ -47,7 +47,7 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 	db.First(&team, player.TeamID)
 	response := buildResponse(player, team)
 
-	_, err := s.ChannelMessageSendReply(m.ChannelID, response, m.MessageReference)
+	_, err := s.ChannelMessageSendReply(m.ChannelID, response, m.Reference())
 	if err != nil {
 		log.Fatalf("Failed to send message: %v", err)
 	}
