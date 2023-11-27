@@ -67,7 +67,7 @@ func buildResponse(player models.Player, team models.Team) string {
 	response += fmt.Sprintf("- **Points Per Game:** %s\n", player.PointsPerGame)
 	response += fmt.Sprintf("- **Goals:** %d\n", player.Goals)
 	response += fmt.Sprintf("- **Assists:** %d\n", player.Assists)
-	response += fmt.Sprintf("- **Games Played:** %d\n", player.Starts)
+	response += fmt.Sprintf("- **Games in Starting 11:** %d\n", player.Starts)
 	response += fmt.Sprintf("- **Minutes Played:** %d\n", player.Minutes)
 
 	if player.Position != "Forward" && player.Position != "Midfielder" {
