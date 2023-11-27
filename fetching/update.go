@@ -143,12 +143,12 @@ func updatePlayers(db *gorm.DB, players []FetchedPlayer, s *discordgo.Session) {
 
 				if newPlayer.Price < player.Price {
 					priceFallersBatch[newPlayer.TeamID] = append(priceFallersBatch[newPlayer.TeamID],
-						fmt.Sprintf("- %s (%s): $%.1f -> $%.1f", newPlayer.WebName, team.ShortName, float32(player.Price)/10, float32(newPlayer.Price)/10))
+						fmt.Sprintf("- %s (%s): £%.1f -> £%.1f", newPlayer.WebName, team.ShortName, float32(player.Price)/10, float32(newPlayer.Price)/10))
 				}
 
 				if newPlayer.Price > player.Price {
 					priceRisersBatch[newPlayer.TeamID] = append(priceRisersBatch[newPlayer.TeamID],
-						fmt.Sprintf("- %s (%s): $%.1f -> $%.1f", newPlayer.WebName, team.ShortName, float32(player.Price)/10, float32(newPlayer.Price)/10))
+						fmt.Sprintf("- %s (%s): £%.1f -> £%.1f", newPlayer.WebName, team.ShortName, float32(player.Price)/10, float32(newPlayer.Price)/10))
 				}
 				db.Save(&newPlayer)
 				log.Printf("Player updated: (%v) %v", newPlayer.ID, newPlayer.Name)
