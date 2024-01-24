@@ -24,18 +24,21 @@ const (
 func FetchAndUpdate(db *gorm.DB, s *discordgo.Session) {
 	resp, err := http.Get(fetchURL)
 	if err != nil {
-		log.Fatalf("Failed to fetch data: %v", err)
+		log.Printf("Failed to fetch data: %v", err)
+		return
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("Failed to fetch data: %v", err)
+		log.Printf("Failed to fetch data: %v", err)
+		return
 	}
 
 	var data TeamsAndPlayersData
 	if err := json.Unmarshal(body, &data); err != nil {
 		log.Printf("Failed to fetch data: %v", err)
+		return
 	}
 
 	updateTeams(db, data.Teams)
