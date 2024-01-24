@@ -14,10 +14,12 @@ import (
 	"strings"
 )
 
-const fetchURL = "https://fantasy.premierleague.com/api/bootstrap-static/"
-const injuryNewsChannel = "1177893613649268776"
-const priceChangesChannel = "1177893636252381214"
-const newPlayersChannel = "1177919636398948444"
+const (
+	fetchURL            = "https://fantasy.premierleague.com/api/bootstrap-static/"
+	injuryNewsChannel   = "1177893613649268776"
+	priceChangesChannel = "1177893636252381214"
+	newPlayersChannel   = "1177919636398948444"
+)
 
 func FetchAndUpdate(db *gorm.DB, s *discordgo.Session) {
 	resp, err := http.Get(fetchURL)
