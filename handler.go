@@ -1,7 +1,6 @@
-package handler
+package main
 
 import (
-	"fpl_discord_bot/database"
 	"fpl_discord_bot/message/cmd"
 	"fpl_discord_bot/message/commands"
 	"fpl_discord_bot/util"
@@ -28,14 +27,13 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	command := args[1]
 	channelID := m.ChannelID
-	db := database.GetDB()
 
 	if isCommandAllowedInChannel(command, channelID) {
 		switch command {
 		case cmd.Hello:
 			commands.HandleHello(s, m)
 		case cmd.Player:
-			commands.HandlePlayer(s, m, db, args[2:])
+			commands.HandlePlayer(s, m, pr, tr, args[2:])
 		default:
 			util.InformAndDelete(s, m.Message, "Unknown command")
 		}

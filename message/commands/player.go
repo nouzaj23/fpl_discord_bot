@@ -3,14 +3,14 @@ package commands
 import (
 	"fmt"
 	"fpl_discord_bot/models"
+	"fpl_discord_bot/repository"
 	"fpl_discord_bot/util"
 	"github.com/bwmarrin/discordgo"
-	"gorm.io/gorm"
 	"log"
 	"strings"
 )
 
-func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB, args []string) {
+func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, pr repository.PlayerRepository, tr repository.TeamRepository, args []string) {
 	if len(args) == 0 {
 		util.InformAndDelete(s, m.Message, "Missing player name. Usage:\n!fpl player <player_name>")
 		return
@@ -22,8 +22,7 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 	} else {
 		name = args[0]
 	}
-	var players []models.Player
-	db.Where("Name LIKE ?", "%"+name+"%").Find(&players)
+	players, _ := pr.FindByName(name)
 
 	if len(players) == 0 {
 		util.InformAndDelete(s, m.Message, fmt.Sprintf("No player with name '%s' found, please try again", name))
@@ -33,8 +32,7 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 	if len(players) > 1 {
 		response := fmt.Sprintf("**Multiple players found matching the name %s**.\n", name)
 		for _, player := range players {
-			var team models.Team
-			db.First(&team, player.TeamID)
+			team, _ := tr.Find(player.TeamID)
 			response += fmt.Sprintf("- %s (%s) - %s\n", player.Name, team.ShortName, player.Position)
 		}
 		response += "Please try again with a more precise name"
@@ -43,9 +41,8 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, db *gorm.DB,
 	}
 
 	player := players[0]
-	var team models.Team
-	db.First(&team, player.TeamID)
-	response := buildResponse(player, team)
+	team, _ := tr.Find(player.TeamID)
+	response := buildResponse(player, *team)
 
 	_, err := s.ChannelMessageSendReply(m.ChannelID, response, m.Reference())
 	if err != nil {
