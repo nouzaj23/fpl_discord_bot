@@ -5,7 +5,6 @@ import (
 	"fpl_discord_bot/message"
 	"fpl_discord_bot/models"
 	"fpl_discord_bot/repository"
-	"fpl_discord_bot/util"
 	"github.com/bwmarrin/discordgo"
 	"log"
 	"strings"
@@ -70,9 +69,9 @@ func buildResponse(player models.Player, team models.Team) string {
 
 	if player.Position != "Forward" && player.Position != "Midfielder" {
 		response += fmt.Sprintf("- **Clean Sheets:** %d\n", player.CleanSheets)
-		response += fmt.Sprintf("- **Clean Sheets Per 90:** %.2f\n", util.RoundFloat(float64(player.CleanSheetsPer90), 2))
+		response += fmt.Sprintf("- **Clean Sheets Per 90:** %.2f\n", float64(player.CleanSheetsPer90))
 		response += fmt.Sprintf("- **Goals Conceded:** %d\n", player.GoalsConceded)
-		response += fmt.Sprintf("- **Goals Conceded Per 90:** %.2f\n", util.RoundFloat(float64(player.GoalsConcededPer90), 2))
+		response += fmt.Sprintf("- **Goals Conceded Per 90:** %.2f\n", float64(player.GoalsConcededPer90))
 	}
 
 	if player.Position == "Goalkeeper" {
@@ -82,16 +81,16 @@ func buildResponse(player models.Player, team models.Team) string {
 	response += fmt.Sprintf("- **Yellow Cards:** %d\n", player.YellowCards)
 	response += fmt.Sprintf("- **Red Cards:** %d\n", player.RedCards)
 	response += "\n**Advanced Stats:**\n"
-	response += fmt.Sprintf("- **xG (Expected Goals):** %.2f\n", util.RoundFloat(float64(player.XG), 2))
-	response += fmt.Sprintf("- **xG (Expected Goals) Per 90:** %.2f\n", util.RoundFloat(float64(player.XGper90), 2))
-	response += fmt.Sprintf("- **xA (Expected Assists):** %.2f\n", util.RoundFloat(float64(player.XA), 2))
-	response += fmt.Sprintf("- **xA (Expected Assists) Per 90:** %.2f\n", util.RoundFloat(float64(player.XAper90), 2))
-	response += fmt.Sprintf("- **xGI (Expected Goal Involvement):** %.2f\n", util.RoundFloat(float64(player.XGI), 2))
-	response += fmt.Sprintf("- **xGI (Expected Goal Involvement) Per 90:** %.2f\n", util.RoundFloat(float64(player.XGIper90), 2))
+	response += fmt.Sprintf("- **xG (Expected Goals):** %.2f\n", float64(player.XG))
+	response += fmt.Sprintf("- **xG (Expected Goals) Per 90:** %.2f\n", float64(player.XGper90), 2)
+	response += fmt.Sprintf("- **xA (Expected Assists):** %.2f\n", float64(player.XA))
+	response += fmt.Sprintf("- **xA (Expected Assists) Per 90:** %.2f\n", float64(player.XAper90))
+	response += fmt.Sprintf("- **xGI (Expected Goal Involvement):** %.2f\n", float64(player.XGI))
+	response += fmt.Sprintf("- **xGI (Expected Goal Involvement) Per 90:** %.2f\n", float64(player.XGIper90))
 
 	if player.Position == "Goalkeeper" || player.Position == "Defender" {
-		response += fmt.Sprintf("- **xGC (Expected Goals Conceded):** %.2f\n", util.RoundFloat(float64(player.XGC), 2))
-		response += fmt.Sprintf("- **XGC (Expected Goals Conceded) Per 90:** %.2f\n", util.RoundFloat(float64(player.XGCper90), 2))
+		response += fmt.Sprintf("- **xGC (Expected Goals Conceded):** %.2f\n", float64(player.XGC))
+		response += fmt.Sprintf("- **XGC (Expected Goals Conceded) Per 90:** %.2f\n", float64(player.XGCper90))
 	}
 
 	response += "\n**Miscellaneous Information:**\n"
