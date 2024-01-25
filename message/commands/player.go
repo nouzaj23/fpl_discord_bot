@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"fpl_discord_bot/message"
 	"fpl_discord_bot/models"
 	"fpl_discord_bot/repository"
 	"fpl_discord_bot/util"
@@ -12,7 +13,7 @@ import (
 
 func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, pr repository.PlayerRepository, tr repository.TeamRepository, args []string) {
 	if len(args) == 0 {
-		util.InformAndDelete(s, m.Message, "Missing player name. Usage:\n!fpl player <player_name>")
+		message.InformAndDelete(s, m.Message, "Missing player name. Usage:\n!fpl player <player_name>")
 		return
 	}
 
@@ -25,7 +26,7 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, pr repositor
 	players, _ := pr.FindByName(name)
 
 	if len(players) == 0 {
-		util.InformAndDelete(s, m.Message, fmt.Sprintf("No player with name '%s' found, please try again", name))
+		message.InformAndDelete(s, m.Message, fmt.Sprintf("No player with name '%s' found, please try again", name))
 		return
 	}
 
@@ -36,7 +37,7 @@ func HandlePlayer(s *discordgo.Session, m *discordgo.MessageCreate, pr repositor
 			response += fmt.Sprintf("- %s (%s) - %s\n", player.Name, team.ShortName, player.Position)
 		}
 		response += "Please try again with a more precise name"
-		util.InformAndDelete(s, m.Message, response)
+		message.InformAndDelete(s, m.Message, response)
 		return
 	}
 

@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fpl_discord_bot/message"
 	"fpl_discord_bot/message/cmd"
 	"fpl_discord_bot/message/commands"
-	"fpl_discord_bot/util"
 	"github.com/bwmarrin/discordgo"
 	"strings"
 )
@@ -35,10 +35,10 @@ func MessageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		case cmd.Player:
 			commands.HandlePlayer(s, m, pr, tr, args[2:])
 		default:
-			util.InformAndDelete(s, m.Message, "Unknown command")
+			message.InformAndDelete(s, m.Message, "Unknown command")
 		}
 	} else {
-		util.InformAndDelete(s, m.Message, "This command is not allowed in this channel")
+		message.InformAndDelete(s, m.Message, "This command is not allowed in this channel")
 	}
 }
 
