@@ -41,7 +41,7 @@ func main() {
 	}
 	defer sess.Close()
 	fmt.Println("The bot is running!")
-	go fetching.HandleFetch(db, sess)
+	go fetching.HandleFetch(pr, tr, sess)
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)

@@ -1,14 +1,14 @@
 package fetching
 
 import (
+	"fpl_discord_bot/repository"
 	"github.com/bwmarrin/discordgo"
-	"gorm.io/gorm"
 	"time"
 )
 
-func HandleFetch(db *gorm.DB, s *discordgo.Session) {
+func HandleFetch(pr repository.PlayerRepository, tr repository.TeamRepository, s *discordgo.Session) {
 	for {
-		FetchAndUpdate(db, s)
+		FetchAndUpdate(pr, tr, s)
 		time.Sleep(time.Minute * 15)
 	}
 }
