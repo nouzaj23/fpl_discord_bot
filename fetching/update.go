@@ -201,13 +201,13 @@ func exportInjuryNews(injuryNewsBatch map[uint][]string, s *discordgo.Session) {
 	if len(injuryNewsBatch) == 0 {
 		return
 	}
-	var result string
-	result += "# New injury updates ⚠️ \n"
+	var sb strings.Builder
+	sb.WriteString("# New injury updates ⚠️ \n")
 	for _, teamNews := range injuryNewsBatch {
-		result += strings.Join(teamNews, "\n")
-		result += "\n"
+		sb.WriteString(strings.Join(teamNews, "\n"))
+		sb.WriteString("\n")
 	}
-	result = strings.TrimSuffix(result, "\n")
+	result := strings.TrimSuffix(sb.String(), "\n")
 	_, err := s.ChannelMessageSend(injuryNewsChannel, result)
 	if err != nil {
 		log.Fatalf("Failed to send message: %v", err)
@@ -218,22 +218,22 @@ func exportPriceChanges(priceRisersBatch map[uint][]string, priceFallersBatch ma
 	if len(priceRisersBatch) == 0 && len(priceFallersBatch) == 0 {
 		return
 	}
-	var result string
+	var sb strings.Builder
 	if len(priceRisersBatch) > 0 {
-		result += "# Price risers 📈 \n"
+		sb.WriteString("# Price risers 📈 \n")
 		for _, priceRisers := range priceRisersBatch {
-			result += strings.Join(priceRisers, "\n")
-			result += "\n"
+			sb.WriteString(strings.Join(priceRisers, "\n"))
+			sb.WriteString("\n")
 		}
 	}
 	if len(priceFallersBatch) > 0 {
-		result += "# Price fallers 📉 \n"
+		sb.WriteString("# Price fallers 📉 \n")
 		for _, priceFallers := range priceFallersBatch {
-			result += strings.Join(priceFallers, "\n")
-			result += "\n"
+			sb.WriteString(strings.Join(priceFallers, "\n"))
+			sb.WriteString("\n")
 		}
 	}
-	result = strings.TrimSuffix(result, "\n")
+	result := strings.TrimSuffix(sb.String(), "\n")
 	_, err := s.ChannelMessageSend(priceChangesChannel, result)
 	if err != nil {
 		log.Fatalf("Failed to send message: %v", err)
@@ -244,13 +244,13 @@ func exportNewPlayers(newPlayersBatch map[uint][]string, s *discordgo.Session) {
 	if len(newPlayersBatch) == 0 {
 		return
 	}
-	var result string
-	result += "# New players 🆕 \n"
+	var sb strings.Builder
+	sb.WriteString("# New players 🆕 \n")
 	for _, newPlayers := range newPlayersBatch {
-		result += strings.Join(newPlayers, "\n")
-		result += "\n"
+		sb.WriteString(strings.Join(newPlayers, "\n"))
+		sb.WriteString("\n")
 	}
-	result = strings.TrimSuffix(result, "\n")
+	result := strings.TrimSuffix(sb.String(), "\n")
 	_, err := s.ChannelMessageSend(newPlayersChannel, result)
 	if err != nil {
 		log.Fatalf("Failed to send message: %v", err)
