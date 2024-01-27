@@ -48,7 +48,6 @@ func FetchAndUpdate(pr repository.PlayerRepository, tr repository.TeamRepository
 
 func updateTeams(tr repository.TeamRepository, teams []FetchedTeam) {
 	for _, fetchedTeam := range teams {
-		var team models.Team
 		newTeam := models.Team{
 			ID:                  uint(fetchedTeam.ID),
 			Name:                fetchedTeam.Name,
@@ -61,13 +60,13 @@ func updateTeams(tr repository.TeamRepository, teams []FetchedTeam) {
 			StrengthDefenceAway: uint(fetchedTeam.StrengthDefenceAway),
 		}
 
-		_, err := tr.Find(newTeam.ID)
+		team, err := tr.Find(newTeam.ID)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			tr.Create(newTeam)
 			log.Printf("New Team created: (%v) %v", newTeam.ID, newTeam.Name)
 		} else {
 			newTeam.Model = team.Model
-			if newTeam != team {
+			if newTeam != *team {
 				tr.Update(newTeam)
 				log.Printf("Team updated: (%v) %v", newTeam.ID, newTeam.Name)
 			}
@@ -210,7 +209,7 @@ func exportInjuryNews(injuryNewsBatch map[uint][]string, s *discordgo.Session) {
 	result := strings.TrimSuffix(sb.String(), "\n")
 	_, err := s.ChannelMessageSend(injuryNewsChannel, result)
 	if err != nil {
-		log.Fatalf("Failed to send message: %v", err)
+		log.Printf("Failed to send message: %v", err)
 	}
 }
 
@@ -236,7 +235,7 @@ func exportPriceChanges(priceRisersBatch map[uint][]string, priceFallersBatch ma
 	result := strings.TrimSuffix(sb.String(), "\n")
 	_, err := s.ChannelMessageSend(priceChangesChannel, result)
 	if err != nil {
-		log.Fatalf("Failed to send message: %v", err)
+		log.Printf("Failed to send message: %v", err)
 	}
 }
 
@@ -253,6 +252,6 @@ func exportNewPlayers(newPlayersBatch map[uint][]string, s *discordgo.Session) {
 	result := strings.TrimSuffix(sb.String(), "\n")
 	_, err := s.ChannelMessageSend(newPlayersChannel, result)
 	if err != nil {
-		log.Fatalf("Failed to send message: %v", err)
+		log.Printf("Failed to send message: %v", err)
 	}
 }
