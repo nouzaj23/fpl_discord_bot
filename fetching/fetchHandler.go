@@ -1,14 +1,18 @@
 package fetching
 
 import (
+	"fpl_discord_bot/repository"
 	"github.com/bwmarrin/discordgo"
-	"gorm.io/gorm"
 	"time"
 )
 
-func HandleFetch(db *gorm.DB, s *discordgo.Session) {
+func HandleFetch(pr repository.PlayerRepository, tr repository.TeamRepository, s *discordgo.Session) {
+	ticker := time.NewTicker(time.Minute * 15)
+	defer ticker.Stop()
 	for {
-		FetchAndUpdate(db, s)
-		time.Sleep(time.Minute * 15)
+		select {
+		case <-ticker.C:
+			FetchAndUpdate(pr, tr, s)
+		}
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"fpl_discord_bot/models"
+	"fpl_discord_bot/repository"
 	"github.com/bwmarrin/discordgo"
 	"gorm.io/gorm"
 	"io"
@@ -14,35 +15,39 @@ import (
 	"strings"
 )
 
-const fetchURL = "https://fantasy.premierleague.com/api/bootstrap-static/"
-const injuryNewsChannel = "1177893613649268776"
-const priceChangesChannel = "1177893636252381214"
-const newPlayersChannel = "1177919636398948444"
+const (
+	fetchURL            = "https://fantasy.premierleague.com/api/bootstrap-static/"
+	injuryNewsChannel   = "1177893613649268776"
+	priceChangesChannel = "1177893636252381214"
+	newPlayersChannel   = "1177919636398948444"
+)
 
-func FetchAndUpdate(db *gorm.DB, s *discordgo.Session) {
+func FetchAndUpdate(pr repository.PlayerRepository, tr repository.TeamRepository, s *discordgo.Session) {
 	resp, err := http.Get(fetchURL)
 	if err != nil {
-		log.Fatalf("Failed to fetch data: %v", err)
+		log.Printf("Failed to fetch data: %v", err)
+		return
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("Failed to fetch data: %v", err)
+		log.Printf("Failed to fetch data: %v", err)
+		return
 	}
 
 	var data TeamsAndPlayersData
 	if err := json.Unmarshal(body, &data); err != nil {
 		log.Printf("Failed to fetch data: %v", err)
+		return
 	}
 
-	updateTeams(db, data.Teams)
-	updatePlayers(db, data.Players, s)
+	updateTeams(tr, data.Teams)
+	updatePlayers(pr, tr, data.Players, s)
 }
 
-func updateTeams(db *gorm.DB, teams []FetchedTeam) {
+func updateTeams(tr repository.TeamRepository, teams []FetchedTeam) {
 	for _, fetchedTeam := range teams {
-		var team models.Team
 		newTeam := models.Team{
 			ID:                  uint(fetchedTeam.ID),
 			Name:                fetchedTeam.Name,
@@ -55,27 +60,26 @@ func updateTeams(db *gorm.DB, teams []FetchedTeam) {
 			StrengthDefenceAway: uint(fetchedTeam.StrengthDefenceAway),
 		}
 
-		dbSearch := db.First(&team, newTeam.ID)
-		if errors.Is(dbSearch.Error, gorm.ErrRecordNotFound) {
-			db.Create(&newTeam)
+		team, err := tr.Find(newTeam.ID)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			tr.Create(newTeam)
 			log.Printf("New Team created: (%v) %v", newTeam.ID, newTeam.Name)
 		} else {
 			newTeam.Model = team.Model
-			if newTeam != team {
-				db.Save(&newTeam)
+			if newTeam != *team {
+				tr.Update(newTeam)
 				log.Printf("Team updated: (%v) %v", newTeam.ID, newTeam.Name)
 			}
 		}
 	}
 }
 
-func updatePlayers(db *gorm.DB, players []FetchedPlayer, s *discordgo.Session) {
+func updatePlayers(pr repository.PlayerRepository, tr repository.TeamRepository, players []FetchedPlayer, s *discordgo.Session) {
 	var injuryNewsBatch = map[uint][]string{}
 	var newPlayersBatch = map[uint][]string{}
 	var priceRisersBatch = map[uint][]string{}
 	var priceFallersBatch = map[uint][]string{}
 	for _, fetchedPlayer := range players {
-		var player models.Player
 		newPlayer := models.Player{
 			ID:                 uint(fetchedPlayer.ID),
 			Name:               fmt.Sprintf("%s %s", fetchedPlayer.FirstName, fetchedPlayer.SecondName),
@@ -115,11 +119,10 @@ func updatePlayers(db *gorm.DB, players []FetchedPlayer, s *discordgo.Session) {
 			GoalsConcededPer90: fetchedPlayer.GoalsConcededPer90,
 			CleanSheetsPer90:   fetchedPlayer.CleanSheetsPer90,
 		}
-		var team models.Team
-		db.First(&team, newPlayer.TeamID)
-		dbSearch := db.First(&player, newPlayer.ID)
-		if errors.Is(dbSearch.Error, gorm.ErrRecordNotFound) {
-			db.Create(&newPlayer)
+		team, _ := tr.Find(newPlayer.TeamID)
+		player, err := pr.Find(newPlayer.ID)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			pr.Create(newPlayer)
 			newPlayersBatch[newPlayer.TeamID] = append(newPlayersBatch[newPlayer.TeamID],
 				fmt.Sprintf("- %s (%s) - %s $%.1f",
 					newPlayer.WebName,
@@ -129,35 +132,45 @@ func updatePlayers(db *gorm.DB, players []FetchedPlayer, s *discordgo.Session) {
 			log.Printf("New player created: (%v) %v", newPlayer.ID, newPlayer.Name)
 		} else {
 			newPlayer.Model = player.Model
-			if newPlayer != player {
-				if newPlayer.News != player.News {
-					var news string
-					if newPlayer.News == "" {
-						news = "Available"
-					} else {
-						news = newPlayer.News
-					}
-					injuryNewsBatch[newPlayer.TeamID] = append(injuryNewsBatch[newPlayer.TeamID],
-						fmt.Sprintf("- %s (%s) - %s", newPlayer.WebName, team.ShortName, news))
-				}
-
-				if newPlayer.Price < player.Price {
-					priceFallersBatch[newPlayer.TeamID] = append(priceFallersBatch[newPlayer.TeamID],
-						fmt.Sprintf("- %s (%s): £%.1f -> £%.1f", newPlayer.WebName, team.ShortName, float32(player.Price)/10, float32(newPlayer.Price)/10))
-				}
-
-				if newPlayer.Price > player.Price {
-					priceRisersBatch[newPlayer.TeamID] = append(priceRisersBatch[newPlayer.TeamID],
-						fmt.Sprintf("- %s (%s): £%.1f -> £%.1f", newPlayer.WebName, team.ShortName, float32(player.Price)/10, float32(newPlayer.Price)/10))
-				}
-				db.Save(&newPlayer)
-				log.Printf("Player updated: (%v) %v", newPlayer.ID, newPlayer.Name)
+			if newPlayer != *player {
+				comparePlayerInfo(*player, newPlayer, *team, pr, injuryNewsBatch, priceFallersBatch, priceRisersBatch)
 			}
 		}
 	}
 	go exportInjuryNews(injuryNewsBatch, s)
 	go exportPriceChanges(priceRisersBatch, priceFallersBatch, s)
 	go exportNewPlayers(newPlayersBatch, s)
+}
+
+func comparePlayerInfo(player models.Player,
+	newPlayer models.Player,
+	team models.Team,
+	pr repository.PlayerRepository,
+	injuryNewsBatch map[uint][]string,
+	priceFallersBatch map[uint][]string,
+	priceRisersBatch map[uint][]string) {
+	if newPlayer.News != player.News {
+		var news string
+		if newPlayer.News == "" {
+			news = "Available"
+		} else {
+			news = newPlayer.News
+		}
+		injuryNewsBatch[newPlayer.TeamID] = append(injuryNewsBatch[newPlayer.TeamID],
+			fmt.Sprintf("- %s (%s) - %s", newPlayer.WebName, team.ShortName, news))
+	}
+
+	if newPlayer.Price < player.Price {
+		priceFallersBatch[newPlayer.TeamID] = append(priceFallersBatch[newPlayer.TeamID],
+			fmt.Sprintf("- %s (%s): £%.1f -> £%.1f", newPlayer.WebName, team.ShortName, float32(player.Price)/10, float32(newPlayer.Price)/10))
+	}
+
+	if newPlayer.Price > player.Price {
+		priceRisersBatch[newPlayer.TeamID] = append(priceRisersBatch[newPlayer.TeamID],
+			fmt.Sprintf("- %s (%s): £%.1f -> £%.1f", newPlayer.WebName, team.ShortName, float32(player.Price)/10, float32(newPlayer.Price)/10))
+	}
+	pr.Update(newPlayer)
+	log.Printf("Player updated: (%v) %v", newPlayer.ID, newPlayer.Name)
 }
 
 func getPosition(elementType int) string {
@@ -187,16 +200,16 @@ func exportInjuryNews(injuryNewsBatch map[uint][]string, s *discordgo.Session) {
 	if len(injuryNewsBatch) == 0 {
 		return
 	}
-	var result string
-	result += "# New injury updates ⚠️ \n"
+	var sb strings.Builder
+	sb.WriteString("# New injury updates ⚠️ \n")
 	for _, teamNews := range injuryNewsBatch {
-		result += strings.Join(teamNews, "\n")
-		result += "\n"
+		sb.WriteString(strings.Join(teamNews, "\n"))
+		sb.WriteString("\n")
 	}
-	result = strings.TrimSuffix(result, "\n")
+	result := strings.TrimSuffix(sb.String(), "\n")
 	_, err := s.ChannelMessageSend(injuryNewsChannel, result)
 	if err != nil {
-		log.Fatalf("Failed to send message: %v", err)
+		log.Printf("Failed to send message: %v", err)
 	}
 }
 
@@ -204,25 +217,25 @@ func exportPriceChanges(priceRisersBatch map[uint][]string, priceFallersBatch ma
 	if len(priceRisersBatch) == 0 && len(priceFallersBatch) == 0 {
 		return
 	}
-	var result string
+	var sb strings.Builder
 	if len(priceRisersBatch) > 0 {
-		result += "# Price risers 📈 \n"
+		sb.WriteString("# Price risers 📈 \n")
 		for _, priceRisers := range priceRisersBatch {
-			result += strings.Join(priceRisers, "\n")
-			result += "\n"
+			sb.WriteString(strings.Join(priceRisers, "\n"))
+			sb.WriteString("\n")
 		}
 	}
 	if len(priceFallersBatch) > 0 {
-		result += "# Price fallers 📉 \n"
+		sb.WriteString("# Price fallers 📉 \n")
 		for _, priceFallers := range priceFallersBatch {
-			result += strings.Join(priceFallers, "\n")
-			result += "\n"
+			sb.WriteString(strings.Join(priceFallers, "\n"))
+			sb.WriteString("\n")
 		}
 	}
-	result = strings.TrimSuffix(result, "\n")
+	result := strings.TrimSuffix(sb.String(), "\n")
 	_, err := s.ChannelMessageSend(priceChangesChannel, result)
 	if err != nil {
-		log.Fatalf("Failed to send message: %v", err)
+		log.Printf("Failed to send message: %v", err)
 	}
 }
 
@@ -230,15 +243,15 @@ func exportNewPlayers(newPlayersBatch map[uint][]string, s *discordgo.Session) {
 	if len(newPlayersBatch) == 0 {
 		return
 	}
-	var result string
-	result += "# New players 🆕 \n"
+	var sb strings.Builder
+	sb.WriteString("# New players 🆕 \n")
 	for _, newPlayers := range newPlayersBatch {
-		result += strings.Join(newPlayers, "\n")
-		result += "\n"
+		sb.WriteString(strings.Join(newPlayers, "\n"))
+		sb.WriteString("\n")
 	}
-	result = strings.TrimSuffix(result, "\n")
+	result := strings.TrimSuffix(sb.String(), "\n")
 	_, err := s.ChannelMessageSend(newPlayersChannel, result)
 	if err != nil {
-		log.Fatalf("Failed to send message: %v", err)
+		log.Printf("Failed to send message: %v", err)
 	}
 }

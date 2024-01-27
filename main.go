@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"fpl_discord_bot/database"
 	"fpl_discord_bot/fetching"
-	"fpl_discord_bot/message/handler"
 	"fpl_discord_bot/models"
+	"fpl_discord_bot/repository"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 	"log"
@@ -13,6 +13,9 @@ import (
 	"os/signal"
 	"syscall"
 )
+
+var pr repository.PlayerRepository
+var tr repository.TeamRepository
 
 func main() {
 	godotenv.Load()
@@ -27,7 +30,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
-	sess.AddHandler(handler.MessageCreate)
+	pr = repository.NewPlayerRepository(db)
+	tr = repository.NewTeamRepository(db)
+	sess.AddHandler(MessageCreate)
 
 	sess.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 	err = sess.Open()
@@ -36,7 +41,7 @@ func main() {
 	}
 	defer sess.Close()
 	fmt.Println("The bot is running!")
-	go fetching.HandleFetch(db, sess)
+	go fetching.HandleFetch(pr, tr, sess)
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
